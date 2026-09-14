@@ -1,0 +1,552 @@
+_base_ = ['../_base_/datasets/IRSTD-1k.py']
+default_scope = 'mmdet'
+
+
+kd = 0
+quanti = 1
+bit = 4
+progress = True
+load_from = '/home/caiwm/mmdetection-3.0.0/ckpt/retina18_epoch_50.pth'
+resume = False
+resume_from = None
+
+# if bit == 8 or bit == 6:
+#     max_epochs = 10
+# else:
+#     max_epochs = 20
+
+max_epochs = 300
+batch_size = 2
+
+base_lr_lp = 0.002
+
+base_lr_tea = 0.0001
+
+
+
+img_scale = (800, 800)
+
+weight_feat_loss = 0.08
+weight_channel_loss = 0.64
+weight_spatial_loss = 0.61
+weight_relation_loss = 2.2
+
+num_classes = 1
+mine = 0
+dorefa = 0
+lsq = 1
+app = 0
+mcqd = 0
+qkd = 0
+qfd = 0
+qdcl = 0
+tqt = 0
+nnie = 0
+qdrop = 0
+dsq = 0
+pact = 0
+fixed = 0
+
+qkd_p1 = 10
+qkd_p2 = 15
+
+weight_mine_feat = 0.18
+weight_kdori = 9
+weight_feat = 0.05
+
+method = ''
+if mine:
+    method = 'mine'
+    extra_config = {
+    'extra_qconfig_dict': {
+        'w_observer': 'EMAMinMaxObserver',                              # custom weight observer
+        'a_observer': 'EMAMinMaxObserver',                              # custom activation observer
+        'w_fakequantize': 'LearnableFakeQuantize',                    # custom weight fake quantize function
+        'a_fakequantize': 'LearnableFakeQuantize',                    # custom activation fake quantize function
+        'w_qscheme': {
+            'bit': bit,                                             # custom bitwidth for weight,
+            'symmetry': False,                                    # custom whether quant is symmetric for weight,
+            'per_channel': True,                                  # custom whether quant is per-channel or per-tensor for weight,
+            'pot_scale': False,                                   # custom whether scale is power of two for weight.
+        },
+        'a_qscheme': {
+            'bit': bit,                                             # custom bitwidth for activation,
+            'symmetry': False,                                    # custom whether quant is symmetric for activation,
+            'per_channel': False,                                  # custom whether quant is per-channel or per-tensor for activation,
+            'pot_scale': False,                                   # custom whether scale is power of two for activation.
+            }
+        }
+    }
+elif dorefa:
+    method = 'dorefa'
+    extra_config = {
+    'extra_qconfig_dict': {
+        'w_observer': 'EMAMinMaxObserver',                              # custom weight observer
+        'a_observer': 'EMAMinMaxObserver',                              # custom activation observer
+        'w_fakequantize': 'DoReFaFakeQuantize',                    # custom weight fake quantize function
+        'a_fakequantize': 'DoReFaFakeQuantize',                    # custom activation fake quantize function
+        'w_qscheme': {
+            'bit': bit,                                             # custom bitwidth for weight,
+            'symmetry': True,                                    # custom whether quant is symmetric for weight,
+            'per_channel': False,                                  # custom whether quant is per-channel or per-tensor for weight,
+            'pot_scale': False,                                   # custom whether scale is power of two for weight.
+        },
+        'a_qscheme': {
+            'bit': bit,                                             # custom bitwidth for activation,
+            'symmetry': False,                                    # custom whether quant is symmetric for activation,
+            'per_channel': False,                                  # custom whether quant is per-channel or per-tensor for activation,
+            'pot_scale': False,                                   # custom whether scale is power of two for activation.
+            }
+        }
+    }
+elif lsq:
+    method = 'lsq'
+    extra_config = {
+    'extra_qconfig_dict': {
+        # 'w_observer': 'ClipStdObserver',                              # custom weight observer
+        # 'a_observer': 'ClipStdObserver',                              # custom activation observer
+        'w_observer': 'EMAMinMaxObserver',                              # custom weight observer
+        'a_observer': 'EMAMinMaxObserver',      
+        'w_fakequantize': 'LearnableFakeQuantize',                    # custom weight fake quantize function
+        'a_fakequantize': 'LearnableFakeQuantize',                    # custom activation fake quantize function
+        'w_qscheme': {
+            'bit': bit,                                             # custom bitwidth for weight,
+            'symmetry': True,                                    # custom whether quant is symmetric for weight,
+            'per_channel': False,                                  # custom whether quant is per-channel or per-tensor for weight,
+            'pot_scale': False,                                   # custom whether scale is power of two for weight.
+        },
+        'a_qscheme': {
+            'bit': bit,                                             # custom bitwidth for activation,
+            'symmetry': True,                                    # custom whether quant is symmetric for activation,
+            'per_channel': False,                                  # custom whether quant is per-channel or per-tensor for activation,
+            'pot_scale': False,                                   # custom whether scale is power of two for activation.
+            }
+        }
+    }
+elif app:
+    method = 'app'
+    extra_config = {
+    'extra_qconfig_dict': {
+        'w_observer': 'EMAMinMaxObserver',                              # custom weight observer
+        'a_observer': 'EMAMinMaxObserver',                              # custom activation observer
+        'w_fakequantize': 'FixedFakeQuantize',                    # custom weight fake quantize function
+        'a_fakequantize': 'FixedFakeQuantize',                    # custom activation fake quantize function
+        'w_qscheme': {
+            'bit': bit,                                             # custom bitwidth for weight,
+            'symmetry': True,                                    # custom whether quant is symmetric for weight,
+            'per_channel': False,                                  # custom whether quant is per-channel or per-tensor for weight,
+            'pot_scale': False,                                   # custom whether scale is power of two for weight.
+        },
+        'a_qscheme': {
+            'bit': bit,                                             # custom bitwidth for activation,
+            'symmetry': False,                                    # custom whether quant is symmetric for activation,
+            'per_channel': False,                                  # custom whether quant is per-channel or per-tensor for activation,
+            'pot_scale': False,                                   # custom whether scale is power of two for activation.
+            }
+        }
+    }
+elif fixed:
+    method = 'fixed'
+    extra_config = {
+    'extra_qconfig_dict': {
+        'w_observer': 'ClipStdObserver',                              # custom weight observer
+        'a_observer': 'ClipStdObserver',                              # custom activation observer
+        'w_fakequantize': 'FixedFakeQuantize',                    # custom weight fake quantize function
+        'a_fakequantize': 'FixedFakeQuantize',                    # custom activation fake quantize function
+        'w_qscheme': {
+            'bit': bit,                                             # custom bitwidth for weight,
+            'symmetry': True,                                    # custom whether quant is symmetric for weight,
+            'per_channel': False,                                  # custom whether quant is per-channel or per-tensor for weight,
+            'pot_scale': False,                                   # custom whether scale is power of two for weight.
+        },
+        'a_qscheme': {
+            'bit': bit,                                             # custom bitwidth for activation,
+            'symmetry': False,                                    # custom whether quant is symmetric for activation,
+            'per_channel': False,                                  # custom whether quant is per-channel or per-tensor for activation,
+            'pot_scale': False,                                   # custom whether scale is power of two for activation.
+            }
+        }
+    }
+elif mcqd:
+    method = 'mcqd'
+    extra_config = {
+    'extra_qconfig_dict': {
+        'w_observer': 'EMAMinMaxObserver',                              # custom weight observer
+        'a_observer': 'EMAMinMaxObserver',                              # custom activation observer
+        'w_fakequantize': 'FixedFakeQuantize',                    # custom weight fake quantize function
+        'a_fakequantize': 'FixedFakeQuantize',                    # custom activation fake quantize function
+        'w_qscheme': {
+            'bit': bit,                                             # custom bitwidth for weight,
+            'symmetry': True,                                    # custom whether quant is symmetric for weight,
+            'per_channel': False,                                  # custom whether quant is per-channel or per-tensor for weight,
+            'pot_scale': False,                                   # custom whether scale is power of two for weight.
+        },
+        'a_qscheme': {
+            'bit': bit,                                             # custom bitwidth for activation,
+            'symmetry': True,                                    # custom whether quant is symmetric for activation,
+            'per_channel': False,                                  # custom whether quant is per-channel or per-tensor for activation,
+            'pot_scale': False,                                   # custom whether scale is power of two for activation.
+            }
+        }
+    }
+elif qkd:
+    method = 'qkd'
+    extra_config = {
+    'extra_qconfig_dict': {
+        'w_observer': 'MinMaxObserver',                              # custom weight observer
+        'a_observer': 'MinMaxObserver',                              # custom activation observer
+        'w_fakequantize': 'LearnableFakeQuantize',                    # custom weight fake quantize function
+        'a_fakequantize': 'LearnableFakeQuantize',                    # custom activation fake quantize function
+        'w_qscheme': {
+            'bit': bit,                                             # custom bitwidth for weight,
+            'symmetry': True,                                    # custom whether quant is symmetric for weight,
+            'per_channel': False,                                  # custom whether quant is per-channel or per-tensor for weight,
+            'pot_scale': False,                                   # custom whether scale is power of two for weight.
+        },
+        'a_qscheme': {
+            'bit': bit,                                             # custom bitwidth for activation,
+            'symmetry': False,                                    # custom whether quant is symmetric for activation,
+            'per_channel': False,                                  # custom whether quant is per-channel or per-tensor for activation,
+            'pot_scale': False,                                   # custom whether scale is power of two for activation.
+            }
+        }
+    }
+elif qfd:
+    method = 'qfd'
+    extra_config = {
+    'extra_qconfig_dict': {
+        'w_observer': 'EMAMinMaxObserver',                              # custom weight observer
+        'a_observer': 'EMAMinMaxObserver',                              # custom activation observer
+        'w_fakequantize': 'LearnableFakeQuantize',                    # custom weight fake quantize function
+        'a_fakequantize': 'LearnableFakeQuantize',                    # custom activation fake quantize function
+        'w_qscheme': {
+            'bit': bit,                                             # custom bitwidth for weight,
+            'symmetry': True,                                    # custom whether quant is symmetric for weight,
+            'per_channel': False,                                  # custom whether quant is per-channel or per-tensor for weight,
+            'pot_scale': False,                                   # custom whether scale is power of two for weight.
+        },
+        'a_qscheme': {
+            'bit': bit,                                             # custom bitwidth for activation,
+            'symmetry': False,                                    # custom whether quant is symmetric for activation,
+            'per_channel': False,                                  # custom whether quant is per-channel or per-tensor for activation,
+            'pot_scale': False,                                   # custom whether scale is power of two for activation.
+            }
+        }
+    }
+elif qdcl:
+    method = 'qdcl'
+    extra_config = {
+    'extra_qconfig_dict': {
+        'w_observer': 'MinMaxObserver',                              # custom weight observer
+        'a_observer': 'MinMaxObserver',                              # custom activation observer
+        'w_fakequantize': 'FixedFakeQuantize',                    # custom weight fake quantize function
+        'a_fakequantize': 'FixedFakeQuantize',                    # custom activation fake quantize function
+        'w_qscheme': {
+            'bit': bit,                                             # custom bitwidth for weight,
+            'symmetry': True,                                    # custom whether quant is symmetric for weight,
+            'per_channel': False,                                  # custom whether quant is per-channel or per-tensor for weight,
+            'pot_scale': False,                                   # custom whether scale is power of two for weight.
+        },
+        'a_qscheme': {
+            'bit': bit,                                             # custom bitwidth for activation,
+            'symmetry': False,                                    # custom whether quant is symmetric for activation,
+            'per_channel': False,                                  # custom whether quant is per-channel or per-tensor for activation,
+            'pot_scale': False,                                   # custom whether scale is power of two for activation.
+            }
+        }
+    }
+elif tqt:
+    method = 'tqt'
+    extra_config = {
+    'extra_qconfig_dict': {
+        'w_observer': 'ClipStdObserver',                              # custom weight observer
+        'a_observer': 'ClipStdObserver',                              # custom activation observer
+        'w_fakequantize': 'TqtFakeQuantize',                    # custom weight fake quantize function
+        'a_fakequantize': 'TqtFakeQuantize',                    # custom activation fake quantize function
+        'w_qscheme': {
+            'bit': bit,                                             # custom bitwidth for weight,
+            'symmetry': True,                                    # custom whether quant is symmetric for weight,
+            'per_channel': False,                                  # custom whether quant is per-channel or per-tensor for weight,
+            'pot_scale': False,                                   # custom whether scale is power of two for weight.
+        },
+        'a_qscheme': {
+            'bit': bit,                                             # custom bitwidth for activation,
+            'symmetry': True,                                    # custom whether quant is symmetric for activation,
+            'per_channel': False,                                  # custom whether quant is per-channel or per-tensor for activation,
+            'pot_scale': False,                                   # custom whether scale is power of two for activation.
+            }
+        }
+    }
+    # quantize = {
+    #     'quantize_type': naive_ptq, # support naive_ptq or advanced_ptq
+    #     'cali_batchnum': 256,  # 越多越好？？似乎是的
+    #     'quant_algorithm': tqt,
+    # }
+    
+
+# training:
+#     my_buff_flag: True
+#     qloss_flag: True
+#     fold_bn_flag: False
+# misc:
+#     resume: False
+elif nnie:
+    method = 'nnie'
+    extra_config = {
+    'extra_qconfig_dict': {
+        'w_observer': 'ClipStdObserver',                              # custom weight observer
+        'a_observer': 'ClipStdObserver',                              # custom activation observer
+        'w_fakequantize': 'NNIEFakeQuantize',                    # custom weight fake quantize function
+        'a_fakequantize': 'NNIEFakeQuantize',                    # custom activation fake quantize function
+        'w_qscheme': {
+            'bit': bit,                                             # custom bitwidth for weight,
+            'symmetry': True,                                    # custom whether quant is symmetric for weight,
+            'per_channel': False,                                  # custom whether quant is per-channel or per-tensor for weight,
+            'pot_scale': False,                                   # custom whether scale is power of two for weight.
+        },
+        'a_qscheme': {
+            'bit': bit,                                             # custom bitwidth for activation,
+            'symmetry': False,                                    # custom whether quant is symmetric for activation,
+            'per_channel': False,                                  # custom whether quant is per-channel or per-tensor for activation,
+            'pot_scale': False,                                   # custom whether scale is power of two for activation.
+            }
+        }
+    }
+elif pact:
+    method = 'pact'
+    extra_config = {
+    'extra_qconfig_dict': {
+        'w_observer': 'ClipStdObserver',                              # custom weight observer
+        'a_observer': 'ClipStdObserver',                              # custom activation observer
+        'w_fakequantize': 'PACTFakeQuantize',                    # custom weight fake quantize function
+        'a_fakequantize': 'PACTFakeQuantize',                    # custom activation fake quantize function
+        'w_qscheme': {
+            'bit': bit,                                             # custom bitwidth for weight,
+            'symmetry': True,                                    # custom whether quant is symmetric for weight,
+            'per_channel': False,                                  # custom whether quant is per-channel or per-tensor for weight,
+            'pot_scale': False,                                   # custom whether scale is power of two for weight.
+        },
+        'a_qscheme': {
+            'bit': bit,                                             # custom bitwidth for activation,
+            'symmetry': False,                                    # custom whether quant is symmetric for activation,
+            'per_channel': False,                                  # custom whether quant is per-channel or per-tensor for activation,
+            'pot_scale': False,                                   # custom whether scale is power of two for activation.
+            }
+        }
+    }
+elif qdrop:
+    method = 'qdrop'
+    extra_config = {
+    'extra_qconfig_dict': {
+        'w_observer': 'MinMaxObserver',                              # custom weight observer
+        'a_observer': 'MinMaxObserver',                              # custom activation observer
+        'w_fakequantize': 'QDropFakeQuantize',                    # custom weight fake quantize function
+        'a_fakequantize': 'QDropFakeQuantize',                    # custom activation fake quantize function
+        'w_qscheme': {
+            'bit': bit,                                             # custom bitwidth for weight,
+            'symmetry': False,                                # custom whether quant is symmetric for weight,
+            'per_channel': False,                                  # custom whether quant is per-channel or per-tensor for weight,
+            'pot_scale': False,                                   # custom whether scale is power of two for weight.
+        },
+        'a_qscheme': {
+            'bit': bit,                                             # custom bitwidth for activation,
+            'symmetry': True,                                    # custom whether quant is symmetric for activation,
+            'per_channel': False,                                  # custom whether quant is per-channel or per-tensor for activation,
+            'pot_scale': False,                                   # custom whether scale is power of two for activation.
+            }
+        }
+    }
+elif dsq:
+    method = 'dsq'
+    extra_config = {
+    'extra_qconfig_dict': {
+        'w_observer': 'ClipStdObserver',                              # custom weight observer
+        'a_observer': 'ClipStdObserver',                              # custom activation observer
+        'w_fakequantize': 'DSQFakeQuantize',                    # custom weight fake quantize function
+        'a_fakequantize': 'DSQFakeQuantize',                    # custom activation fake quantize function
+        'w_qscheme': {
+            'bit': bit,                                             # custom bitwidth for weight,
+            'symmetry': True,                                    # custom whether quant is symmetric for weight,
+            'per_channel': False,                                  # custom whether quant is per-channel or per-tensor for weight,
+            'pot_scale': False,                                   # custom whether scale is power of two for weight.
+        },
+        'a_qscheme': {
+            'bit': bit,                                             # custom bitwidth for activation,
+            'symmetry': True,                                    # custom whether quant is symmetric for activation,
+            'per_channel': False,                                  # custom whether quant is per-channel or per-tensor for activation,
+            'pot_scale': False,                                   # custom whether scale is power of two for activation.
+            }
+        }
+    }
+else:
+    method = 'only_qat'
+    extra_config = {
+    'extra_qconfig_dict': {
+        'w_observer': 'MinMaxObserver',                              # custom weight observer
+        'a_observer': 'MinMaxObserver',                              # custom activation observer
+        'w_fakequantize': 'FixedFakeQuantize',                    # custom weight fake quantize function
+        'a_fakequantize': 'FixedFakeQuantize',                    # custom activation fake quantize function
+        'w_qscheme': {
+            'bit': bit,                                             # custom bitwidth for weight,
+            'symmetry': True,                                    # custom whether quant is symmetric for weight,
+            'per_channel': False,                                  # custom whether quant is per-channel or per-tensor for weight,
+            'pot_scale': False,                                   # custom whether scale is power of two for weight.
+        },
+        'a_qscheme': {
+            'bit': bit,                                             # custom bitwidth for activation,
+            'symmetry': False,                                    # custom whether quant is symmetric for activation,
+            'per_channel': False,                                  # custom whether quant is per-channel or per-tensor for activation,
+            'pot_scale': False,                                   # custom whether scale is power of two for activation.
+            }
+        }
+    }
+
+work_dir = f'quanti/retinanet/SSDD/std/w{bit}a{bit}/std35'
+# work_dir = f'quanti/retinanet/SSDD/w{bit}a{bit}/vp_qod'
+# work_dir = f'quanti/retinanet/SSDD/w{bit}a{bit}_new/{method}'
+# work_dir = f'quanti/retinanet/SSDD/w{bit}a{bit}/qdrop_lsq'
+# work_dir = f'quanti/retinanet/SSDD/w{bit}a{bit}/qdrop_lsq_clip'
+
+auto_scale_lr = dict(base_batch_size=2, enable=False)
+backend_args = None
+data_root = ''
+dataset_type = 'CocoDataset'
+default_hooks = dict(
+    # checkpoint=dict(
+    #     type='CheckpointHook', 
+    #     interval=1, 
+    #     save_best='coco/bbox_mAP_50', # 指定保存最好的 mAP50
+    #     rule='greater'
+    # ),
+    checkpoint=None,
+    logger=dict(interval=50, type='LoggerHook'),
+    # logger=None,
+    param_scheduler=dict(type='ParamSchedulerHook'),
+    sampler_seed=dict(type='DistSamplerSeedHook'),
+    timer=dict(type='IterTimerHook'),
+    visualization=dict(type='DetVisualizationHook'))
+default_scope = 'mmdet'
+env_cfg = dict(
+    cudnn_benchmark=False,
+    dist_cfg=dict(backend='nccl'),
+    mp_cfg=dict(mp_start_method='fork', opencv_num_threads=0))
+img_scales = [
+    (
+        1333,
+        800,
+    ),
+    (
+        666,
+        400,
+    ),
+    (
+        2000,
+        1200,
+    ),
+]
+launcher = 'none'
+# load_from = None
+log_level = 'INFO'
+log_processor = dict(by_epoch=True, type='LogProcessor', window_size=50)
+model = dict(
+    type='RetinaNet_quanti',
+    data_preprocessor=dict(
+        type='DetDataPreprocessor',
+        mean=[123.675, 116.28, 103.53],
+        std=[58.395, 57.12, 57.375],
+        bgr_to_rgb=True,
+        pad_size_divisor=32),
+    backbone=dict(
+        type='ResNet',
+        depth=18,
+        num_stages=4,
+        out_indices=(0, 1, 2, 3),
+        frozen_stages=1,
+        norm_cfg=dict(type='BN', requires_grad=True),
+        norm_eval=True,
+        style='pytorch',
+        init_cfg=dict(type='Pretrained', checkpoint='torchvision://resnet18')),
+    neck=dict(
+        type='FPN',
+        in_channels=[64, 128, 256, 512],
+        out_channels=64,
+        start_level=1,
+        add_extra_convs='on_input',
+        num_outs=5),
+    bbox_head=dict(
+        type='RetinaHead',
+        num_classes=1,
+        in_channels=64,
+        stacked_convs=4,
+        feat_channels=64,
+        anchor_generator=dict(
+            type='AnchorGenerator',
+            octave_base_scale=4,
+            scales_per_octave=3,
+            ratios=[0.5, 1.0, 2.0],
+            strides=[8, 16, 32, 64, 128]),
+        bbox_coder=dict(
+            type='DeltaXYWHBBoxCoder',
+            target_means=[.0, .0, .0, .0],
+            target_stds=[1.0, 1.0, 1.0, 1.0]),
+        loss_cls=dict(
+            type='CrossEntropyLoss',
+            use_sigmoid=True,
+            loss_weight=0.5
+        ),
+        loss_bbox=dict(type='L1Loss', loss_weight=1.0)),
+    # model training and testing settings
+    train_cfg=dict(
+        assigner=dict(
+            type='MaxIoUAssigner',
+            pos_iou_thr=0.5,
+            neg_iou_thr=0.4,
+            min_pos_iou=0,
+            ignore_iof_thr=-1),
+        sampler=dict(
+            type='PseudoSampler'),  # Focal loss should use PseudoSampler
+        allowed_border=-1,
+        pos_weight=-1,
+        debug=False),
+    test_cfg=dict(
+        nms_pre=1000,
+        min_bbox_size=0,
+        score_thr=0.3,
+        nms=dict(type='nms', iou_threshold=0.3),
+        max_per_img=100))
+# optim_wrapper = dict(
+#     clip_grad=dict(max_norm=35, norm_type=2),
+#     optimizer=dict(lr=0.001, momentum=0.9, type='SGD', weight_decay=0.0001),
+#     paramwise_cfg=dict(bias_decay_mult=0.0, bias_lr_mult=2.0),
+#     type='AmpOptimWrapper')
+# optimizer
+optim_wrapper = dict(
+    type='OptimWrapper',
+    optimizer=dict(type='SGD', lr=base_lr_tea, momentum=0.9, weight_decay=0.0001),
+    clip_grad=dict(max_norm=35, norm_type=2))
+
+optim_wrapper_lp = dict(
+    type='OptimWrapper',
+    optimizer=dict(type='SGD', lr = base_lr_lp, momentum=0.9, weight_decay=0.0001),
+    clip_grad=dict(max_norm=35, norm_type=2))
+
+param_scheduler = [
+    dict(
+        begin=0, by_epoch=False, end=500, start_factor=0.001, type='LinearLR'),
+    dict(
+        begin=0,
+        by_epoch=True,
+        end=12,
+        gamma=0.1,
+        milestones=[
+            30,
+        ],
+        type='MultiStepLR'),
+]
+resume = False
+test_cfg = dict(type='TestLoop')
+
+train_cfg = dict(type='EpochBasedTrainLoop_quanti', max_epochs=max_epochs, val_interval=1)
+# train_cfg = dict(type='EpochBasedTrainLoop_quanti_meta', max_epochs=20, val_interval=1)
+val_cfg = dict(type='ValLoop')
+test_cfg = dict(type='TestLoop')
