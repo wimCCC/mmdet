@@ -1,8 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import os 
-os.environ['CUDA_VISIBLE_DEVICES'] = "0"
 import argparse
 import logging
+import os
 import os.path as osp
 
 from mmengine.config import Config, DictAction
@@ -10,7 +9,8 @@ from mmengine.logging import print_log
 from mmengine.registry import RUNNERS
 from mmengine.runner import Runner
 
-from mmdet.utils import setup_cache_size_limit_of_dynamo
+from mmdet.utils import (register_all_modules,
+                         setup_cache_size_limit_of_dynamo)
 
 
 def parse_args():
@@ -62,6 +62,8 @@ def parse_args():
 
 def main():
     args = parse_args()
+
+    register_all_modules(init_default_scope=True)
 
     # Reduce the number of repeated compilations and improve
     # training speed.

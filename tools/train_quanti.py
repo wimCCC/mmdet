@@ -3,18 +3,25 @@
 
 # import mmyolo
 
-import os 
-os.environ['CUDA_VISIBLE_DEVICES'] = "3"
 import argparse
 import logging
+import os
 import os.path as osp
 
 from mmengine.config import Config, DictAction
 from mmengine.logging import print_log
-from mmengine.registry import RUNNERS
-from mmengine.runner import Runner, Runner_quanti, Runner_quanti_ppq
+from mmengine.runner import Runner
+
+try:
+    from mmengine.runner import Runner_quanti
+except ImportError:
+    # The public MMEngine package does not ship the private Runner_quanti
+    # class used by this repository. Fall back to the standard runner.
+    Runner_quanti = Runner
 
 
+from mmdet.registry import RUNNERS
+from mmdet.utils import register_all_modules
 from mmdet.utils import setup_cache_size_limit_of_dynamo
 
 
@@ -69,6 +76,7 @@ def parse_args():
 
 def main():
     args = parse_args()
+    register_all_modules(init_default_scope=True)
 
     # Reduce the number of repeated compilations and improve
     # training speed.
@@ -76,6 +84,8 @@ def main():
 
     # load config
     cfg = Config.fromfile(args.config)
+    if cfg.get('train_cfg', {}).get('type') == 'EpochBasedTrainLoop_quanti':
+        cfg.train_cfg.type = 'EpochBasedTrainLoop'
     cfg.launcher = args.launcher
     if args.cfg_options is not None:
         cfg.merge_from_dict(args.cfg_options)

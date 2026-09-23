@@ -1,4 +1,5 @@
 default_scope = 'mmdet'
+runner_type = 'QATCompensationRunner'
 
 
 kd = 0
@@ -97,7 +98,7 @@ elif dorefa:
         }
     }
 elif lsq:
-    method = 'lsq'
+    method = 'ssi_lsq_hgs'
     extra_config = {
     'extra_qconfig_dict': {
         'w_observer': 'ClipStdObserver',                              # custom weight observer
@@ -105,7 +106,7 @@ elif lsq:
         # 'w_observer': 'EMAMinMaxObserver',                              # custom weight observer
         # 'a_observer': 'EMAMinMaxObserver',      
         'w_fakequantize': 'LearnableFakeQuantize',                    # custom weight fake quantize function
-        'a_fakequantize': 'LearnableFakeQuantize',                    # custom activation fake quantize function
+        'a_fakequantize': 'LearnableFakeQuantize',                    # LSQ activation fake quantization
         'w_qscheme': {
             'bit': bit,                                             # custom bitwidth for weight,
             'symmetry': True,                                    # custom whether quant is symmetric for weight,
@@ -397,6 +398,16 @@ else:
             }
         }
     }
+
+qat_compensation = dict(
+    enabled=True,
+    method='hgs_low_rank',
+    rank=4,
+    init='hgs',
+    init_alpha=0.01,
+    target='all_existing_weight_quantized_conv2d_and_linear',
+    trainable=True,
+    compensation_dtype='model')
 
 # work_dir = f'quanti/fcos/SSDD/w{bit}a{bit}/{method}'
 work_dir = f'quanti/fcos/SSDD/prob/w{bit}a{bit}/0/{method}'

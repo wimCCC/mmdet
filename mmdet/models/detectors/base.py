@@ -3,7 +3,16 @@ from abc import ABCMeta, abstractmethod
 from typing import Dict, List, Tuple, Union
 
 import torch
-from mmengine.model import BaseModel, BaseModel_quanti, BaseModel_quanti_retinanet, BaseModel_quanti_fcos, BaseModel_quanti_frcnn, BaseModel_quanti_fcos_2, BaseModel_yolo_kd
+from mmengine.model import BaseModel
+
+# The original project used a private MMEngine fork that added these base
+# classes. Keep the quantized detector classes usable with stock MMEngine.
+BaseModel_quanti = BaseModel
+BaseModel_quanti_retinanet = BaseModel
+BaseModel_quanti_fcos = BaseModel
+BaseModel_quanti_frcnn = BaseModel
+BaseModel_quanti_fcos_2 = BaseModel
+BaseModel_yolo_kd = BaseModel
 from torch import Tensor
 
 from mmdet.structures import DetDataSample, OptSampleList, SampleList
@@ -521,9 +530,6 @@ class BaseDetector_quanti(BaseModel_quanti, metaclass=ABCMeta):
             - If ``mode="predict"``, return a list of :obj:`DetDataSample`.
             - If ``mode="loss"``, return a dict of tensor.
         """
-        # return self.loss(inputs, data_samples)
-        return self._forward(inputs, data_samples)
-        
         if mode == 'loss':
             return self.loss(inputs, data_samples)
         elif mode == 'predict':
@@ -633,11 +639,8 @@ class BaseDetector_quanti_frcnn(BaseModel_quanti_frcnn, metaclass=ABCMeta):
     def forward(self,
                 inputs: torch.Tensor,
                 data_samples: OptSampleList = None,
+                mode: str = 'tensor',
                 ) -> ForwardResults:
-        # return self._forward(inputs, data_samples)
-
-        return self._forward(inputs, data_samples)
-        
         if mode == 'loss':
             return self.loss(inputs, data_samples)
         elif mode == 'predict':

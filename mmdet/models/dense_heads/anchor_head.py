@@ -64,6 +64,7 @@ class AnchorHead(BaseDenseHead):
             type='CrossEntropyLoss', use_sigmoid=True, loss_weight=1.0),
         loss_bbox: ConfigType = dict(
             type='SmoothL1Loss', beta=1.0 / 9.0, loss_weight=1.0),
+        use_hqod: bool = False,
         train_cfg: OptConfigType = None,
         test_cfg: OptConfigType = None,
         init_cfg: OptMultiConfig = dict(
@@ -82,6 +83,7 @@ class AnchorHead(BaseDenseHead):
         if self.cls_out_channels <= 0:
             raise ValueError(f'num_classes={num_classes} is too small')
         self.reg_decoded_bbox = reg_decoded_bbox
+        self.use_hqod = use_hqod
 
         self.bbox_coder = TASK_UTILS.build(bbox_coder)
         self.loss_cls = MODELS.build(loss_cls)
@@ -484,7 +486,6 @@ class AnchorHead(BaseDenseHead):
         # Step 1: reshape inputs
         # -------------------------------
 
-        print("vpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp")
 
         labels = labels.reshape(-1)
         label_weights = label_weights.reshape(-1)
@@ -500,7 +501,8 @@ class AnchorHead(BaseDenseHead):
             cls_score,
             labels,
             label_weights,
-            avg_factor=avg_factor
+            avg_factor=avg_factor,
+            reduction_override='none'
         )
 
         # -------------------------------
@@ -517,8 +519,13 @@ class AnchorHead(BaseDenseHead):
             bbox_pred,
             bbox_targets,
             bbox_weights,
-            avg_factor=avg_factor
+            avg_factor=avg_factor,
+            reduction_override='none'
         )
+
+        if not self.use_hqod:
+            return (loss_cls.sum() / avg_factor,
+                    loss_bbox.sum() / avg_factor)
 
         # -------------------------------
         # Step 4: HQOD task harmony adjustment (集成 HQOD)
@@ -526,9 +533,8 @@ class AnchorHead(BaseDenseHead):
 
         from mmdet.models.dense_heads import RetinaHead, RPNHead
             # 获取正样本索引
-        pos_inds = torch.nonzero(bbox_weights.sum(dim=1), as_tuple=False).squeeze()
-        if pos_inds.numel() == 1:
-            pos_inds = pos_inds.unsqueeze(dim=-1)
+        pos_inds = torch.nonzero(
+            bbox_weights.sum(dim=1), as_tuple=False).flatten()
         if pos_inds.numel() > 0:
             # confidence 处理
             if 'RetinaHead' in self.__class__.__name__:

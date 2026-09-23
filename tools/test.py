@@ -1,6 +1,4 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import os 
-os.environ['CUDA_VISIBLE_DEVICES'] = "6"
 import argparse
 import os
 import os.path as osp
@@ -14,6 +12,7 @@ from mmengine.runner import Runner
 from mmdet.engine.hooks.utils import trigger_visualization_hook
 from mmdet.evaluation import DumpDetResults
 from mmdet.registry import RUNNERS
+from mmdet.utils import register_all_modules
 from mmdet.utils import setup_cache_size_limit_of_dynamo
 
 
@@ -44,7 +43,7 @@ def parse_args():
         '--show', action='store_true', help='show prediction results')
     parser.add_argument(
         '--show-dir',
-        default='/home1/zhangyn/code/mmdetection-3.0.0/mmdeploy/tools/torch2onnx/pth_result',
+        default=None,
         help='directory where painted images will be saved. '
         'If specified, it will be automatically saved '
         'to the work_dir/timestamp/show_dir')
@@ -78,6 +77,7 @@ def parse_args():
 
 def main():
     args = parse_args()
+    register_all_modules(init_default_scope=True)
 
     # Reduce the number of repeated compilations and improve
     # testing speed.

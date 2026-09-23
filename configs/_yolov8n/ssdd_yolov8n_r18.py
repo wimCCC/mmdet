@@ -10,7 +10,9 @@ kd = 0
 quanti = 1
 bit = 4
 progress = True
-load_from = '/home1/zhangyn/code/mmdetection-3.0.0/mmyolo/tools/ckp/ssdd/yolov8n/best_coco_bbox_mAP_50_epoch_95.pth'
+# The original checkpoint path belonged to another machine. Start from the
+# model definition unless a local checkpoint is supplied explicitly.
+load_from = None
 
 # if bit == 8 or bit == 6:
 #     max_epochs = 10
@@ -411,7 +413,7 @@ work_dir = f'quanti/yolov8n/SSDD/prob/w{bit}a{bit}/0/{method}'
 
 auto_scale_lr = dict(base_batch_size=2, enable=False)
 backend_args = None
-data_root = ''
+data_root = '/data5/caiwm/mmdet/data/SSDD/raw/Official-SSDD-OPEN/BBox_SSDD/coco_style/'
 dataset_type = 'CocoDataset'
 default_hooks = dict(
     checkpoint=dict(interval=0, type='CheckpointHook'),
@@ -446,13 +448,13 @@ launcher = 'none'
 log_level = 'INFO'
 log_processor = dict(by_epoch=True, type='LogProcessor', window_size=50)
 # model settings
-data_root = '' # Root path of data
+data_root = '/data5/caiwm/mmdet/data/SSDD/raw/Official-SSDD-OPEN/BBox_SSDD/coco_style/' # Root path of data
 # Path of train annotation file
-train_ann_file = '/home1/zhangyn/code/mmdetection-3.0.0/data/SSDD/annotations/train.json'
-train_data_prefix = '/home1/zhangyn/code/mmdetection-3.0.0/data/SSDD/images/train/'  # Prefix of train image path
+train_ann_file = 'annotations/train.json'
+train_data_prefix = 'images/train/'  # Prefix of train image path
 # Path of val annotation file
-val_ann_file = '/home1/zhangyn/code/mmdetection-3.0.0/data/SSDD/annotations/test.json'
-val_data_prefix = '/home1/zhangyn/code/mmdetection-3.0.0/data/SSDD/images/test/'  # Prefix of val image path
+val_ann_file = 'annotations/test.json'
+val_data_prefix = 'images/test/'  # Prefix of val image path
 
 
 # ========================Frequently modified parameters======================
@@ -622,19 +624,6 @@ pre_transform = [
 ]
 
 last_transform = [
-    dict(
-        type='mmdet.Albu',
-        transforms=albu_train_transforms,
-        bbox_params=dict(
-            type='BboxParams',
-            format='pascal_voc',
-            label_fields=['gt_bboxes_labels', 'gt_ignore_flags']
-        ),
-        keymap={
-            'img': 'image',
-            'gt_bboxes': 'bboxes'
-        }
-    ),
     dict(type='YOLOv5HSVRandomAug'),
     dict(type='mmdet.RandomFlip', prob=0.5),
     dict(
